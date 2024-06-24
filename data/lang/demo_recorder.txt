@@ -1,0 +1,15 @@
+[en]
+
+DEMO_GOOD = [DEMO] List loaded successfully! (%s)
+DEMO_BAD = [DEMO] Failed to load list!
+DEMO_RECORD = [^3%s^1] Recording demo ^3%s^1 - ^3%s^1.
+DEMO_NOT_CONNECT = [^3%s^1] Client is not connected.
+DEMO_ACCESS = [%s] You have no access to that command.
+
+[ru]
+
+DEMO_GOOD = [DEMO] Список успешно загружен! (%s)
+DEMO_BAD = [DEMO] Не удалось загрузить список!
+DEMO_RECORD = [^3%s^1] Идёт запись демо ^3%s^1 - ^3%s^1.
+DEMO_NOT_CONNECT = [^3%s^1] Игрок не подключен.
+DEMO_ACCESS = [%s] У вас не хватает прав для этой команды.
