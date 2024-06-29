@@ -102,14 +102,16 @@ public cmdDemoMenu(id) {
 }
 
 public DemoMenuCode(id, hMenu, item) {
-	menu_destroy(hMenu);
 	if (item == MENU_EXIT) {
+		menu_destroy(hMenu);
 		return PLUGIN_HANDLED;
 	}
 
 	new szData[6], szName[64], iAccess, iCallback;
 	menu_item_getinfo(hMenu, item, iAccess, szData, charsmax(szData), szName, charsmax(szName), iCallback);
 	new iPlayer = str_to_num(szData);
+
+	menu_destroy(hMenu);
 
 	if (!is_user_connected(iPlayer)) {
 		cmdDemoMenu(id);
@@ -163,8 +165,8 @@ public showDemoMenu(id, iPlayer) {
 }
 
 public showDemoMenuCode(id, hMenu, item) {
-	menu_destroy(hMenu);
 	if (item == MENU_EXIT) {
+		menu_destroy(hMenu);
 		g_iPlayer[id] = 0;
 		cmdDemoMenu(id);
 		return PLUGIN_HANDLED;
@@ -173,6 +175,8 @@ public showDemoMenuCode(id, hMenu, item) {
 	new szData[6], szName[64], iAccess, iCallback;
 	menu_item_getinfo(hMenu, item, iAccess, szData, charsmax(szData), szName, charsmax(szName), iCallback);
 	new iKey = str_to_num(szData);
+
+	menu_destroy(hMenu);
 
 	switch (iKey) {
 		case 1: {
@@ -206,10 +210,12 @@ public verifMenu(id) {
 }
 
 public verifMenuCode(id, hMenu, item) {
-	menu_destroy(hMenu);
 	if (item == MENU_EXIT) {
+		menu_destroy(hMenu);
 		return PLUGIN_HANDLED;
 	}
+
+	menu_destroy(hMenu);
 
 	switch (item) {
 		case 0: {
