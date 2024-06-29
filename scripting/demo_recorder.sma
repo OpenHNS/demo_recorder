@@ -34,7 +34,7 @@ new const LOG_FILE_NAME[16] = "DemoRecorder"
 new g_szChooseFile[64];
 
 public plugin_init() {
-	register_plugin("Demo recorder", "1.2", "WessTorn");
+	register_plugin("Demo recorder", "1.3", "WessTorn");
 
 	register_clcmd("demo_menu", "cmdDemoMenu", ADMIN_BAN);
 
@@ -102,8 +102,8 @@ public cmdDemoMenu(id) {
 }
 
 public DemoMenuCode(id, hMenu, item) {
+	menu_destroy(hMenu);
 	if (item == MENU_EXIT) {
-		menu_destroy(hMenu);
 		return PLUGIN_HANDLED;
 	}
 
@@ -117,8 +117,6 @@ public DemoMenuCode(id, hMenu, item) {
 	}
 
 	showDemoMenu(id, iPlayer);
-
-	menu_destroy(hMenu);
 
 	return PLUGIN_HANDLED;
 }
@@ -165,8 +163,8 @@ public showDemoMenu(id, iPlayer) {
 }
 
 public showDemoMenuCode(id, hMenu, item) {
+	menu_destroy(hMenu);
 	if (item == MENU_EXIT) {
-		menu_destroy(hMenu);
 		g_iPlayer[id] = 0;
 		cmdDemoMenu(id);
 		return PLUGIN_HANDLED;
@@ -174,7 +172,6 @@ public showDemoMenuCode(id, hMenu, item) {
 
 	new szData[6], szName[64], iAccess, iCallback;
 	menu_item_getinfo(hMenu, item, iAccess, szData, charsmax(szData), szName, charsmax(szName), iCallback);
-	menu_destroy(hMenu);
 	new iKey = str_to_num(szData);
 
 	switch (iKey) {
@@ -209,14 +206,13 @@ public verifMenu(id) {
 }
 
 public verifMenuCode(id, hMenu, item) {
+	menu_destroy(hMenu);
 	if (item == MENU_EXIT) {
-		menu_destroy(hMenu);
 		return PLUGIN_HANDLED;
 	}
 
 	switch (item) {
 		case 0: {
-			menu_destroy(hMenu);
 			cmdDemoMenu(id);
 			g_iPlayer[id] = 0;
 			return PLUGIN_HANDLED;
