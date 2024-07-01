@@ -34,9 +34,9 @@ new const LOG_FILE_NAME[16] = "DemoRecorder"
 new g_szChooseFile[64];
 
 public plugin_init() {
-	register_plugin("Demo recorder", "1.3", "WessTorn");
+	register_plugin("Demo recorder", "1.3.2", "WessTorn");
 
-	register_clcmd("demo_menu", "cmdDemoMenu", ADMIN_BAN);
+	register_clcmd("demo_menu", "demoMenu", ADMIN_BAN);
 
 	pCvar[DEMONUM] = create_cvar("demo_num", "5", FCVAR_NONE, "Number of demos provided / Кол-во демо", true, 1.0, true, 10.0);
 	bind_pcvar_num(pCvar[DEMONUM], g_iSettings[DEMONUM]);
@@ -76,13 +76,20 @@ public plugin_init() {
 	RegisterHookChain(RG_CSGameRules_ServerDeactivate, "rgServerDeactivate");
 }
 
-public cmdDemoMenu(id) {
+public demoMenu(id) {
+	if (!is_user_connected(id)) {
+		return PLUGIN_HANDLED;
+	}
+
 	if (~get_user_flags(id) & ADMIN_BAN) {
 		client_print(id, print_console, "%L", id, "DEMO_ACCESS", g_iSettings[DEMOPREFIX]);
 		return PLUGIN_HANDLED;
 	}
 
-	new hMenu = menu_create("\rDemo menu \d(choose player)", "DemoMenuCode");
+	new szMsg[64];
+
+	formatex(szMsg, charsmax(szMsg), "%L", id, "DEMO_MENU_TITLE");
+	new hMenu = menu_create(szMsg, "demoMenuHandler");
 
 	new iPlayers[MAX_PLAYERS], iNum;
 	get_players(iPlayers, iNum, "ch");
@@ -96,12 +103,20 @@ public cmdDemoMenu(id) {
 		menu_additem(hMenu, szName, szPlayer, 0);
 	}
 
+	formatex(szMsg, charsmax(szMsg), "%L", id, "DEMO_MENU_PLAYER_EXIT");
+	menu_setprop(hMenu, MPROP_EXITNAME, szMsg);
+
 	menu_display(id, hMenu, 0);
 
 	return PLUGIN_HANDLED;
 }
 
-public DemoMenuCode(id, hMenu, item) {
+public demoMenuHandler(id, hMenu, item) {
+	if (!is_user_connected(id)) {
+		menu_destroy(hMenu);
+		return PLUGIN_HANDLED;
+	}
+
 	if (item == MENU_EXIT) {
 		menu_destroy(hMenu);
 		return PLUGIN_HANDLED;
@@ -109,23 +124,27 @@ public DemoMenuCode(id, hMenu, item) {
 
 	new szData[6], szName[64], iAccess, iCallback;
 	menu_item_getinfo(hMenu, item, iAccess, szData, charsmax(szData), szName, charsmax(szName), iCallback);
+	menu_destroy(hMenu);
+	
 	new iPlayer = str_to_num(szData);
 
-	menu_destroy(hMenu);
-
 	if (!is_user_connected(iPlayer)) {
-		cmdDemoMenu(id);
+		demoMenu(id);
 		return PLUGIN_HANDLED;
 	}
 
-	showDemoMenu(id, iPlayer);
+	playerDemoMenu(id, iPlayer);
 
 	return PLUGIN_HANDLED;
 }
 
 new g_iPlayer[MAX_PLAYERS + 1];
 
-public showDemoMenu(id, iPlayer) {
+public playerDemoMenu(id, iPlayer) {
+	if (!is_user_connected(id)) {
+		return PLUGIN_HANDLED;
+	}
+
 	if (!is_user_connected(iPlayer)) {
 		client_print_color(id, print_team_blue, "%L", id, "DEMO_NOT_CONNECT", g_iSettings[DEMOPREFIX]);
 		return PLUGIN_HANDLED;
@@ -137,17 +156,18 @@ public showDemoMenu(id, iPlayer) {
 	get_user_authid(iPlayer, szAuthID, charsmax(szAuthID));
 
 	new szMsg[64];
-	format(szMsg, charsmax(szMsg), "\rDemo menu^n\d%n (%s)", iPlayer, szAuthID);
-	
-	new hMenu = menu_create(szMsg, "showDemoMenuCode");
 
-	menu_additem(hMenu, "Ban player \d(check demo)^n", "1");
+	formatex(szMsg, charsmax(szMsg), "%L^n\d%n (%s)", id, "DEMO_MENU_PLAYER_TITLE", iPlayer, szAuthID);
+	new hMenu = menu_create(szMsg, "playerDemoMenuHandler");
 
-	formatex(szMsg, charsmax(szMsg), "\dName: %s", g_iSettings[DEMONAME]);
+	formatex(szMsg, charsmax(szMsg), "%L^n", id, "DEMO_MENU_PLAYER_BAN");
+	menu_additem(hMenu, szMsg, "1");
+
+	formatex(szMsg, charsmax(szMsg), "%L %s", id, "DEMO_MENU_PLAYER_NAME", g_iSettings[DEMONAME]);
 	menu_addtext(hMenu, szMsg, 1);
 	
-	new szList[64], iLen;
-	iLen += format(szList[iLen], sizeof szList - iLen, "\dDemos: ");
+	new szList[132], iLen;
+	iLen += format(szList[iLen], sizeof szList - iLen, "%L ", id, "DEMO_MENU_PLAYER_DEMOS");
 
 	for (new i = 0; i < g_iSettings[DEMONUM]; i++) {
 		if (i + 1 == g_iCurrentDemoID[id]) {
@@ -159,24 +179,32 @@ public showDemoMenu(id, iPlayer) {
 
 	menu_addtext(hMenu, szList, 1);
 
+	formatex(szMsg, charsmax(szMsg), "%L", id, "DEMO_MENU_PLAYER_BACK");
+	menu_setprop(hMenu, MPROP_EXITNAME, szMsg);
+
 	menu_display(id, hMenu, 0);
 
 	return PLUGIN_HANDLED;
 }
 
-public showDemoMenuCode(id, hMenu, item) {
+public playerDemoMenuHandler(id, hMenu, item) {
+	if (!is_user_connected(id)) {
+		menu_destroy(hMenu);
+		return PLUGIN_HANDLED;
+	}
+
 	if (item == MENU_EXIT) {
 		menu_destroy(hMenu);
 		g_iPlayer[id] = 0;
-		cmdDemoMenu(id);
+		demoMenu(id);
 		return PLUGIN_HANDLED;
 	}
 
 	new szData[6], szName[64], iAccess, iCallback;
 	menu_item_getinfo(hMenu, item, iAccess, szData, charsmax(szData), szName, charsmax(szName), iCallback);
-	new iKey = str_to_num(szData);
-
 	menu_destroy(hMenu);
+
+	new iKey = str_to_num(szData);
 
 	switch (iKey) {
 		case 1: {
@@ -184,7 +212,7 @@ public showDemoMenuCode(id, hMenu, item) {
 				verifMenu(id);
 			} else {
 				client_print_color(id, print_team_blue, "%L", id, "DEMO_NOT_CONNECT", g_iSettings[DEMOPREFIX]);
-				cmdDemoMenu(id);
+				demoMenu(id);
 			}
 		}
 	}
@@ -196,20 +224,28 @@ public verifMenu(id) {
 	if (!is_user_connected(id) || !is_user_connected(g_iPlayer[id]))
 		return PLUGIN_HANDLED;
 
-	new szMsg[64];
-	formatex(szMsg, charsmax(szMsg), "\rVerification menu^n\dAre you sure you want to ban %n?", g_iPlayer[id]);
-	new hMenu = menu_create(szMsg, "verifMenuCode");
+	new szMsg[132];
 
-	menu_additem(hMenu, "No.", "1");
+	formatex(szMsg, charsmax(szMsg), "%L", id, "DEMO_MENU_VERIF_TITLE", g_iPlayer[id]);
+	new hMenu = menu_create(szMsg, "verifMenuHandler");
 
-	menu_additem(hMenu, "Yes.", "2");
+	formatex(szMsg, charsmax(szMsg), "%L", id, "DEMO_MENU_VERIF_NO");
+	menu_additem(hMenu, szMsg, "1");
+
+	formatex(szMsg, charsmax(szMsg), "%L", id, "DEMO_MENU_VERIF_YES");
+	menu_additem(hMenu, szMsg, "2");
 
 	menu_display(id, hMenu, 0);
 
 	return PLUGIN_HANDLED;
 }
 
-public verifMenuCode(id, hMenu, item) {
+public verifMenuHandler(id, hMenu, item) {
+	if (!is_user_connected(id) || !is_user_connected(g_iPlayer[id])) {
+		menu_destroy(hMenu);
+		return PLUGIN_HANDLED;
+	}
+
 	if (item == MENU_EXIT) {
 		menu_destroy(hMenu);
 		return PLUGIN_HANDLED;
@@ -219,7 +255,7 @@ public verifMenuCode(id, hMenu, item) {
 
 	switch (item) {
 		case 0: {
-			cmdDemoMenu(id);
+			demoMenu(id);
 			g_iPlayer[id] = 0;
 			return PLUGIN_HANDLED;
 		}
@@ -228,7 +264,7 @@ public verifMenuCode(id, hMenu, item) {
 				server_cmd("fb_ban ^"0^" #%d ^"Check demo^"", get_user_userid(g_iPlayer[id]));
 			} else {
 				client_print_color(id, print_team_blue, "%L", id, "DEMO_NOT_CONNECT", g_iSettings[DEMOPREFIX]);
-				cmdDemoMenu(id);
+				demoMenu(id);
 			}
 			g_iPlayer[id] = 0;
 		}
@@ -350,17 +386,17 @@ public rgDropClient(id) {
 }
 
 public server_changelevel() {
-	for(new i = 1; i < MaxClients; i++) {
-		if (is_user_connected(i)) {
-			ClientCmd(i, "stop");
+	for (new id = 1; id <= MaxClients; id++) {
+		if (is_user_connected(id)) {
+			ClientCmd(id, "stop");
 		}
 	}
 }
 
 public rgServerDeactivate() {
-	for(new i = 1; i < MaxClients; i++) {
-		if (is_user_connected(i)) {
-			ClientCmd(i, "stop");
+	for (new id = 1; id <= MaxClients; id++) {
+		if (is_user_connected(id)) {
+			ClientCmd(id, "stop");
 		}
 	}
 }

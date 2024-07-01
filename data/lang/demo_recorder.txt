@@ -6,6 +6,17 @@ DEMO_RECORD = [^3%s^1] Recording demo ^3%s^1 - ^3%s^1.
 DEMO_NOT_CONNECT = [^3%s^1] Client is not connected.
 DEMO_ACCESS = [%s] You have no access to that command.
 
+DEMO_MENU_TITLE = \rDemo menu \d(choose player)
+DEMO_MENU_PLAYER_TITLE = \rDemo menu
+DEMO_MENU_PLAYER_BAN = Ban player \d(check demo)
+DEMO_MENU_PLAYER_NAME = \dName:
+DEMO_MENU_PLAYER_DEMOS = \dDemos:
+DEMO_MENU_PLAYER_BACK = Back
+DEMO_MENU_PLAYER_EXIT = Exit
+DEMO_MENU_VERIF_TITLE = \rVerification menu^n\dAre you sure you want to ban %n?
+DEMO_MENU_VERIF_YES = Yes
+DEMO_MENU_VERIF_NO = No
+
 [ru]
 
 DEMO_GOOD = [DEMO] Список успешно загружен! (%s)
@@ -13,3 +24,14 @@ DEMO_BAD = [DEMO] Не удалось загрузить список!
 DEMO_RECORD = [^3%s^1] Идёт запись демо ^3%s^1 - ^3%s^1.
 DEMO_NOT_CONNECT = [^3%s^1] Игрок не подключен.
 DEMO_ACCESS = [%s] У вас не хватает прав для этой команды.
+
+DEMO_MENU_TITLE = \rДемо меню \d(выберите игрока)
+DEMO_MENU_PLAYER_TITLE = \rДемо меню
+DEMO_MENU_PLAYER_BAN = Забанить игрока \d(чек демо)
+DEMO_MENU_PLAYER_NAME = \dНазвание:
+DEMO_MENU_PLAYER_DEMOS = \dДемки:
+DEMO_MENU_PLAYER_BACK = Назад
+DEMO_MENU_PLAYER_EXIT = Выход
+DEMO_MENU_VERIF_TITLE = \rМеню верификации^n\dВы уверены, что хотите забанить %n?
+DEMO_MENU_VERIF_YES = Да
+DEMO_MENU_VERIF_NO = Нет
