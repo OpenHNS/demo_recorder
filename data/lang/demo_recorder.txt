@@ -4,6 +4,7 @@ DEMO_GOOD = [DEMO] List loaded successfully! (%s)
 DEMO_BAD = [DEMO] Failed to load list!
 DEMO_RECORD = [^3%s^1] Recording demo ^3%s^1 - ^3%s^1.
 DEMO_NOT_CONNECT = [^3%s^1] Client is not connected.
+DEMO_PLAYER_NOT_FOUND = [^3%s^1] Player not found.
 DEMO_ACCESS = [%s] You have no access to that command.
 
 DEMO_MENU_TITLE = \rDemo menu \d(choose player)
@@ -23,6 +24,7 @@ DEMO_GOOD = [DEMO] Список успешно загружен! (%s)
 DEMO_BAD = [DEMO] Не удалось загрузить список!
 DEMO_RECORD = [^3%s^1] Идёт запись демо ^3%s^1 - ^3%s^1.
 DEMO_NOT_CONNECT = [^3%s^1] Игрок не подключен.
+DEMO_PLAYER_NOT_FOUND = [^3%s^1] Игрок не найден.
 DEMO_ACCESS = [%s] У вас не хватает прав для этой команды.
 
 DEMO_MENU_TITLE = \rДемо меню \d(выберите игрока)
