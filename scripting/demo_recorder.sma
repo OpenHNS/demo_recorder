@@ -34,7 +34,7 @@ new const LOG_FILE_NAME[16] = "DemoRecorder"
 new g_szChooseFile[64];
 
 public plugin_init() {
-	register_plugin("Demo recorder", "1.3.2", "WessTorn");
+	register_plugin("Demo recorder", "1.3.3", "WessTorn");
 
 	register_clcmd("demo_menu", "demoMenu", ADMIN_BAN);
 
@@ -139,6 +139,7 @@ public demoMenuHandler(id, hMenu, item) {
 }
 
 new g_iPlayer[MAX_PLAYERS + 1];
+new g_iPlayerUserID[MAX_PLAYERS + 1];
 
 public playerDemoMenu(id, iPlayer) {
 	if (!is_user_connected(id)) {
@@ -151,6 +152,7 @@ public playerDemoMenu(id, iPlayer) {
 	}
 
 	g_iPlayer[id] = iPlayer;
+	g_iPlayerUserID[id] = get_user_userid(iPlayer);
 
 	new szAuthID[32];
 	get_user_authid(iPlayer, szAuthID, charsmax(szAuthID));
@@ -170,7 +172,7 @@ public playerDemoMenu(id, iPlayer) {
 	iLen += format(szList[iLen], sizeof szList - iLen, "%L ", id, "DEMO_MENU_PLAYER_DEMOS");
 
 	for (new i = 0; i < g_iSettings[DEMONUM]; i++) {
-		if (i + 1 == g_iCurrentDemoID[id]) {
+		if (i + 1 == g_iCurrentDemoID[iPlayer]) {
 			iLen += format(szList[iLen], sizeof szList - iLen, "%d(R) ", i + 1);
 		} else {
 			iLen += format(szList[iLen], sizeof szList - iLen, "%d(%s) ", i + 1, g_bNotDemoFiles[iPlayer][i] ? "-" : "+");
@@ -196,6 +198,7 @@ public playerDemoMenuHandler(id, hMenu, item) {
 	if (item == MENU_EXIT) {
 		menu_destroy(hMenu);
 		g_iPlayer[id] = 0;
+		g_iPlayerUserID[id] = 0;
 		demoMenu(id);
 		return PLUGIN_HANDLED;
 	}
@@ -208,12 +211,7 @@ public playerDemoMenuHandler(id, hMenu, item) {
 
 	switch (iKey) {
 		case 1: {
-			if (is_user_connected(g_iPlayer[id])) {
-				verifMenu(id);
-			} else {
-				client_print_color(id, print_team_blue, "%L", id, "DEMO_NOT_CONNECT", g_iSettings[DEMOPREFIX]);
-				demoMenu(id);
-			}
+			verifMenu(id);
 		}
 	}
 
@@ -221,12 +219,24 @@ public playerDemoMenuHandler(id, hMenu, item) {
 }
 
 public verifMenu(id) {
-	if (!is_user_connected(id) || !is_user_connected(g_iPlayer[id]))
+	if (!is_user_connected(id))
 		return PLUGIN_HANDLED;
+
+	new iPlayer = getSelectedPlayer(id);
+	if (!iPlayer) {
+		g_iPlayer[id] = 0;
+		g_iPlayerUserID[id] = 0;
+
+		client_print_color(id, print_team_blue, "%L", id, "DEMO_PLAYER_NOT_FOUND", g_iSettings[DEMOPREFIX]);
+
+		demoMenu(id);
+
+		return PLUGIN_HANDLED;
+	}
 
 	new szMsg[132];
 
-	formatex(szMsg, charsmax(szMsg), "%L", id, "DEMO_MENU_VERIF_TITLE", g_iPlayer[id]);
+	formatex(szMsg, charsmax(szMsg), "%L", id, "DEMO_MENU_VERIF_TITLE", iPlayer);
 	new hMenu = menu_create(szMsg, "verifMenuHandler");
 
 	formatex(szMsg, charsmax(szMsg), "%L", id, "DEMO_MENU_VERIF_NO");
@@ -241,13 +251,29 @@ public verifMenu(id) {
 }
 
 public verifMenuHandler(id, hMenu, item) {
-	if (!is_user_connected(id) || !is_user_connected(g_iPlayer[id])) {
+	if (!is_user_connected(id)) {
 		menu_destroy(hMenu);
 		return PLUGIN_HANDLED;
 	}
 
 	if (item == MENU_EXIT) {
 		menu_destroy(hMenu);
+		g_iPlayer[id] = 0;
+		g_iPlayerUserID[id] = 0;
+		return PLUGIN_HANDLED;
+	}
+
+	new iPlayer = getSelectedPlayer(id);
+	if (!iPlayer) {
+		menu_destroy(hMenu);
+
+		g_iPlayer[id] = 0;
+		g_iPlayerUserID[id] = 0;
+
+		client_print_color(id, print_team_blue, "%L", id, "DEMO_PLAYER_NOT_FOUND", g_iSettings[DEMOPREFIX]);
+
+		demoMenu(id);
+
 		return PLUGIN_HANDLED;
 	}
 
@@ -257,16 +283,13 @@ public verifMenuHandler(id, hMenu, item) {
 		case 0: {
 			demoMenu(id);
 			g_iPlayer[id] = 0;
+			g_iPlayerUserID[id] = 0;
 			return PLUGIN_HANDLED;
 		}
 		case 1: {
-			if (is_user_connected(g_iPlayer[id])) {
-				server_cmd("fb_ban ^"0^" #%d ^"Check demo^"", get_user_userid(g_iPlayer[id]));
-			} else {
-				client_print_color(id, print_team_blue, "%L", id, "DEMO_NOT_CONNECT", g_iSettings[DEMOPREFIX]);
-				demoMenu(id);
-			}
+			server_cmd("fb_ban ^"0^" #%d ^"Check demo^"", get_user_userid(iPlayer));
 			g_iPlayer[id] = 0;
+			g_iPlayerUserID[id] = 0;
 		}
 	}
 	
@@ -350,7 +373,6 @@ public client_putinserver(id) {
 			new szDemoID[3];
 			parse(szData, szDemoID, charsmax(szDemoID));
 			g_iCurrentDemoID[id] = str_to_num(szDemoID);
-			nvault_remove(g_iVault, szAuthID);
 		}
 	}
 
@@ -372,16 +394,22 @@ public rgPlayerSpawn(id) {
 }
 
 public rgDropClient(id) {
-	if (g_bDemoRecording[id])
+	if (g_bDemoRecording[id]) {
 		nvault_set_data(id);
+	}
 
 	arrayset(g_bNotDemoFiles[id], 0, sizeof(g_bNotDemoFiles[]));
 	g_iCurrentDemoID[id] = 0;
 	g_iPlayer[id] = 0;
+	g_iPlayerUserID[id] = 0;
 	g_bDemoRecording[id] = false;
 
 	if (task_exists(id + TASK_DEMO)) {
 		remove_task(id + TASK_DEMO);
+	}
+
+	if (task_exists(id + TASK_CHAT)) {
+		remove_task(id + TASK_CHAT);
 	}
 }
 
@@ -474,4 +502,14 @@ stock LogPlayer(id, szFmt[], any: ...) {
 	}
 	else
 		log_amx("demo_recorder.amxx: LogPlayer():: can't open file ^"%s^"!", g_szLogFile);
+}
+
+stock getSelectedPlayer(id) {
+	new iPlayer = g_iPlayer[id];
+
+	if (!is_user_connected(iPlayer) || get_user_userid(iPlayer) != g_iPlayerUserID[id]) {
+		return 0;
+	}
+
+	return iPlayer;
 }
