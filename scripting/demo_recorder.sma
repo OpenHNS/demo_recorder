@@ -21,6 +21,7 @@ new _:g_iSettings[CVARS];
 
 new g_iCurrentDemoID[MAX_PLAYERS + 1];
 new bool:g_bDemoRecording[MAX_PLAYERS + 1];
+new bool:g_bRecheckerAvailable;
 
 new g_iSearch;
 
@@ -34,7 +35,7 @@ new const LOG_FILE_NAME[16] = "DemoRecorder"
 new g_szChooseFile[64];
 
 public plugin_init() {
-	register_plugin("Demo recorder", "1.3.3", "WessTorn");
+	register_plugin("Demo recorder", "1.3.4", "WessTorn");
 
 	register_clcmd("demo_menu", "demoMenu", ADMIN_BAN);
 
@@ -55,20 +56,26 @@ public plugin_init() {
 
 	register_dictionary("demo_recorder.txt");
 
-	g_iSearch = 7 + strlen(g_iSettings[DEMONAME]) + 2;
+	g_bRecheckerAvailable = has_rechecker();
 
-	if (g_iSettings[DEMONUM]) {
-		for (new i = 1; i <= g_iSettings[DEMONUM]; i++) {
-			new szList[64], iLen;
-			iLen += format(szList[iLen], sizeof szList - iLen, "cstrike/");
-			iLen += format(szList[iLen], sizeof szList - iLen, "%s_%d.dem", g_iSettings[DEMONAME], i);
-			RegisterQueryFile(szList, g_szCallBack, RES_TYPE_MISSING)
+	if (g_bRecheckerAvailable) {
+		g_iSearch = 7 + strlen(g_iSettings[DEMONAME]) + 2;
+
+		if (g_iSettings[DEMONUM]) {
+			for (new i = 1; i <= g_iSettings[DEMONUM]; i++) {
+				new szList[64], iLen;
+				iLen += format(szList[iLen], sizeof szList - iLen, "cstrike/");
+				iLen += format(szList[iLen], sizeof szList - iLen, "%s_%d.dem", g_iSettings[DEMONAME], i);
+				RegisterQueryFile(szList, g_szCallBack, RES_TYPE_MISSING)
+			}
+
+			RegisterHookChain(RC_FileConsistencyProcess, "FileConsistencyProcess", false);
+			server_print("%L", 0, "DEMO_GOOD", g_iSettings[DEMONAME]);
+		} else {
+			server_print("%L", 0, "DEMO_BAD");
 		}
-
-		RegisterHookChain(RC_FileConsistencyProcess, "FileConsistencyProcess", false);
-		server_print("%L", 0, "DEMO_GOOD", g_iSettings[DEMONAME]);
 	} else {
-		server_print("%L", 0, "DEMO_BAD");
+		server_print("%L", 0, "DEMO_RECHECKER_UNAVAILABLE");
 	}
 
 	RegisterHookChain(RG_CBasePlayer_Spawn, "rgPlayerSpawn", true);
@@ -83,6 +90,11 @@ public demoMenu(id) {
 
 	if (~get_user_flags(id) & ADMIN_BAN) {
 		client_print(id, print_console, "%L", id, "DEMO_ACCESS", g_iSettings[DEMOPREFIX]);
+		return PLUGIN_HANDLED;
+	}
+
+	if (!g_bRecheckerAvailable) {
+		client_print(id, print_console, "%L", id, "DEMO_RECHECKER_UNAVAILABLE");
 		return PLUGIN_HANDLED;
 	}
 
@@ -313,6 +325,10 @@ public demo_callBack(const id) {
 public fbans_player_banned_pre(const id) {
 	if (task_exists(id + TASK_DEMO)) {
 		remove_task(id + TASK_DEMO);
+	}
+
+	if (!g_bRecheckerAvailable) {
+		return;
 	}
 
 	new szMess[64], iLen;
