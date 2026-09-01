@@ -2,6 +2,7 @@
 
 DEMO_GOOD = [DEMO] List loaded successfully! (%s)
 DEMO_BAD = [DEMO] Failed to load list!
+DEMO_RECHECKER_UNAVAILABLE = [DEMO] ReChecker was not found. File checking and the demo menu are disabled; demo recording continues to work.
 DEMO_RECORD = [^3%s^1] Recording demo ^3%s^1 - ^3%s^1.
 DEMO_NOT_CONNECT = [^3%s^1] Client is not connected.
 DEMO_PLAYER_NOT_FOUND = [^3%s^1] Player not found.
@@ -22,6 +23,7 @@ DEMO_MENU_VERIF_NO = No
 
 DEMO_GOOD = [DEMO] Список успешно загружен! (%s)
 DEMO_BAD = [DEMO] Не удалось загрузить список!
+DEMO_RECHECKER_UNAVAILABLE = [DEMO] ReChecker не найден. Проверка файлов и демо-меню отключены; запись демо продолжает работать.
 DEMO_RECORD = [^3%s^1] Идёт запись демо ^3%s^1 - ^3%s^1.
 DEMO_NOT_CONNECT = [^3%s^1] Игрок не подключен.
 DEMO_PLAYER_NOT_FOUND = [^3%s^1] Игрок не найден.
